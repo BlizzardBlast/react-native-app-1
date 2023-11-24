@@ -1,26 +1,27 @@
+import { useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
-import EditScreenInfo from "../../components/EditScreenInfo";
-import { Text, View } from "../../components/Themed";
+import { ScrollView } from "react-native-gesture-handler";
+import { View } from "../../components/Themed";
+import Welcome from "../../components/home/Welcome";
 
-export default function TabOneScreen() {
+export default function Home() {
+  const router = useRouter();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <ScrollView showsVerticalScrollIndicator={false}>
+      <View style={styles.container}>
+        <Welcome />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    padding: 17,
+    // alignItems: "center",
+    // justifyContent: "center",
   },
   title: {
     fontSize: 20,
