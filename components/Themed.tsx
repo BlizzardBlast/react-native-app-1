@@ -1,8 +1,4 @@
-/**
- * Learn more about Light and Dark modes:
- * https://docs.expo.io/guides/color-schemes/
- */
-
+import { forwardRef } from "react";
 import {
   Text as DefaultText,
   View as DefaultView,
@@ -32,19 +28,25 @@ export function useThemeColor(
   }
 }
 
-export function Text(props: TextProps) {
+export const Text = forwardRef((props: TextProps, ref: React.Ref<any>) => {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
 
-  return <DefaultText style={[{ color }, style]} {...otherProps} />;
-}
+  return <DefaultText ref={ref} style={[{ color }, style]} {...otherProps} />;
+});
 
-export function View(props: ViewProps) {
+export const View = forwardRef((props: ViewProps, ref: React.Ref<any>) => {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     "background"
   );
 
-  return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
-}
+  return (
+    <DefaultView
+      ref={ref}
+      style={[{ backgroundColor }, style]}
+      {...otherProps}
+    />
+  );
+});

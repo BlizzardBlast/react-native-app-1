@@ -1,19 +1,25 @@
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { StyleSheet, useColorScheme } from "react-native";
+import { useRef, useState } from "react";
+import { Platform, StyleSheet, useColorScheme } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Button from "../../components/Button";
+import CircleButton from "../../components/CircleButton";
+import EmojiList from "../../components/EmojiList";
+import EmojiPicker from "../../components/EmojiPicker";
+import EmojiSticker from "../../components/EmojiSticker";
+import IconButton from "../../components/IconButton";
 import { View } from "../../components/Themed";
 import ImageViewer from "../../components/home/ImageViewer";
 import Colors from "../../constants/Colors";
-import IconButton from "../../components/IconButton";
-import CircleButton from "../../components/CircleButton";
-import EmojiPicker from "../../components/EmojiPicker";
-import EmojiList from "../../components/EmojiList";
-import EmojiSticker from "../../components/EmojiSticker";
+import { captureRef } from "react-native-view-shot";
+import domtoimage from "dom-to-image";
 
 export default function Home() {
   const colorScheme = useColorScheme();
+  const imageRef = useRef();
+  const [status, requestPermission] = MediaLibrary.usePermissions();
   const PlaceholderImage = require("../../assets/images/background-image.png");
   const [selectedImage, setSelectedImage] = useState<string | null | undefined>(
     null
@@ -21,6 +27,10 @@ export default function Home() {
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [showAppOptions, setShowAppOptions] = useState<boolean>(false);
   const [pickedEmoji, setPickedEmoji] = useState<any>(null);
+  const [elementCoordinates, setElementCoordinates] = useState<{
+    width: number;
+    height: number;
+  }>({ width: 0, height: 0 });
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -48,7 +58,36 @@ export default function Home() {
   };
 
   const onSaveImageAsync = async () => {
-    // we will implement this later
+    if (Platform.OS !== "web") {
+      try {
+        const localUri = await captureRef(imageRef, {
+          height: 440,
+          quality: 1,
+        });
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert("Saved!");
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    } else {
+      try {
+        if (imageRef.current) {
+          const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+            quality: 0.95,
+            width: 320,
+            height: 440,
+          });
+          let link = document.createElement("a");
+          link.download = "sticker-smash.jpeg";
+          link.href = dataUrl;
+          link.click();
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
   };
 
   const styles = StyleSheet.create({
@@ -83,15 +122,24 @@ export default function Home() {
     },
   });
 
+  if (status === null) {
+    requestPermission();
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.imageContainer}>
+    <GestureHandlerRootView style={styles.container}>
+      <View ref={imageRef} collapsable={false} style={styles.imageContainer}>
         <ImageViewer
           placeholderImageSource={PlaceholderImage}
           selectedImage={selectedImage}
+          setElementCoordinates={setElementCoordinates}
         />
         {pickedEmoji !== null ? (
-          <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+          <EmojiSticker
+            imageSize={40}
+            stickerSource={pickedEmoji}
+            imageContainerSize={elementCoordinates}
+          />
         ) : null}
       </View>
       {showAppOptions ? (
@@ -123,6 +171,6 @@ export default function Home() {
         <EmojiList onSelect={setPickedEmoji} onCloseModal={onModalClose} />
       </EmojiPicker>
       <StatusBar style="auto" />
-    </View>
+    </GestureHandlerRootView>
   );
 }
